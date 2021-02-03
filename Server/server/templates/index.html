@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="styles.css">
+    <!-- <link rel="stylesheet" href="/Users/khrystyna/Desktop/PhotoProject/Server/server/static/styles.css"> -->
+    <link rel="stylesheet" href="{{url_for('static',filename='styles.css')}}">
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+
     <title>Document</title>
 </head>
 <body>
@@ -24,6 +27,7 @@
         </section>
         <button>Submit</button>  
     </form>
-    <script src='app.js'></script>
+    <!-- <script src='/Users/khrystyna/Desktop/PhotoProject/Server/server/static/app.js'></script> -->
+    <script src="{{url_for('static',filename='app.js')}}"></script>
 </body>
 </html>

@@ -1,7 +1,7 @@
 
-from flask import render_template, url_for, flash, redirect,jsonify
+from flask import render_template, url_for, flash, redirect,jsonify,make_response,session
 from flask import request
-from server.models import User, Upload
+from server.models import User, Upload,Tag
 from server import app,db,bcrypt,gcs,bucket
 from flask_login import login_user,current_user,logout_user
 
@@ -21,62 +21,49 @@ def allowed_file(filename):
 def upload():
     print('before upload current user',current_user, current_user.is_authenticated)
     if not current_user.is_authenticated:
-        return "Login first"
+        redirect(url_for("login"))
+    if request.method=='GET':
+        return render_template("index.html")
+    
     if request.method == 'POST':
         allfiles = request.files.getlist('file')
-        print(allfiles)
+        print('all files', allfiles)
+        print ('another data',request.form)
         if len(allfiles) == 0:
             return "No files Upploaded"
+        upload_dict={}
         # Get the bucket that the file will be uploaded to.
 
         # Create a new blob and upload the file's content.
 
-        for file in allfiles:
+        for (index,file) in enumerate(allfiles):
             if file and allowed_file(file.filename):
                 originalfilename = secure_filename(file.filename)
                 new_filename = str(uuid.uuid4())
                 # server_path = os.path.join(
                 #     app.config['UPLOAD_FOLDER'], new_filename)
-
+                upload_dict[new_filename]=originalfilename
                 # file.save(server_path)
                 blob = bucket.blob(new_filename)
                 blob.upload_from_string(file.read(),content_type=file.content_type)
                 # blob.upload_from_filename(server_path)
-                
-
-                upload_entry = Upload(original_name=originalfilename, path=blob.public_url,user_id=current_user.id)
+                tag_name = request.form['tag'+str(index)]
+                tag =Tag.query.filter_by(name=tag_name).first()
+                if not tag:    
+                    tag=Tag(name=tag_name)
+                upload_entry = Upload(original_name=originalfilename, cloud_path=blob.public_url,user_id=current_user.id)
+                print('upload_entry',upload_entry,upload_entry.tags)
+                upload_entry.tags.append(tag)
                 db.session.add(upload_entry)
+                db.session.add(tag)
                 db.session.commit()
-            
-        print('after upload current user',current_user, current_user.is_authenticated)
+                check=Upload.query.filter(Upload.id==upload_entry.id,Upload.user_id==current_user.id).first()
+                print('check tags for file',originalfilename,'from user',current_user.username,current_user.id,'are', check.tags)
+        # print('after upload current user',current_user, current_user.is_authenticated)
         
-        return "Super"
-    # blob = bucket.blob(uploaded_file.filename)
-
-
-    # # The public URL can be used to directly access the uploaded file via HTTP.
-    # return blob.public_url
-
-
-        # if 'file' not in request.files:
-        #     # return redirect(request.url)
-        #     return 'No files'
-        # file = request.files['file']
-        # if file.filename == '':
-        #     # return redirect(request.url)
-        #     return 'No files'
-
-        # if file and allowed_file(file.filename):
-        #     filename = secure_filename(file.filename)
-        #     print('secure filename', filename)
-        #     print(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-        #     file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-        #     # return redirect(url_for('uploaded_file',
-        #     # filename=filename))
-
-        # return 'Success!'
-
+        return jsonify(upload_dict)
     return 'Something went wrong(('
+
 @app.route('/register', methods=['POST'])
 def register():
     print('before register current user',current_user, current_user.is_authenticated)
@@ -92,18 +79,21 @@ def register():
     db.session.commit()
     print('User entry id',user_entry.id)
     return "Super"
-@app.route('/login', methods=['POST'])
+@app.route('/login', methods=['GET','POST'])
 def login():
     print('beforelogin',current_user, current_user.is_authenticated)
     # if current_user.is_authenticated:
-    #     return "The user is already authenticated!"
+    #      return "The user is already authenticated!"
+    if request.method=='GET':
+        return render_template("login.html")
+
     user = User.query.filter_by(username=request.form['username']).first()
     if user and bcrypt.check_password_hash(user.password, request.form['password']):
             # flash( 'Username already taken.Please select another')
             login_user(user,remember = request.form['remember'])
-            print('current user sfter login',current_user,current_user.is_authenticated)
-            return "User is successfully logged in!"
-    return "Login unsuccessfull.Check everything"
+            return redirect(url_for('upload'))
+    else: 
+        return redirect(url_for('register'))
 @app.route('/logout', methods=['GET','POST'])
 def logout():
     print('beforelogout',current_user, current_user.is_authenticated)
@@ -112,12 +102,29 @@ def logout():
     #     return "The user is already authenticated!"
     print('afterlogout',current_user, current_user.is_authenticated)
 
-    return "Logged out user"
+    return redirect(url_for('login'))
 @app.route('/get_uploads', methods=['GET','POST'])
 def get_uploads():
     print(current_user, current_user.is_authenticated)
     if not current_user.is_authenticated:
-        return "Login first!"
+        return redirect(url_for('login'))
     uploads=Upload.query.filter_by(author=current_user).all()            
     upload_list=[upload.original_name for upload in uploads]
     return jsonify(upload_list)
+
+@app.route('/get_tags', methods=['GET','POST'])
+def tags():
+    if not current_user.is_authenticated:
+        redirect(url_for("login"))
+    tag_set=set()
+    uploads=Upload.query.filter_by(author=current_user).all()  
+    print('uploads for current user', uploads)
+    for upload in uploads:
+        for tag in upload.tags:
+            tag_set.add(tag.name)
+    response = make_response(jsonify(list(tag_set)))
+    # response.headers['Access-Control-Allow-Origin'] = 'null'
+    # response.headers['Access-Control-Allow-Credentials']= 'true'
+    return response
+
+    # return jsonify(tag_list)
