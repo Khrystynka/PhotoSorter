@@ -12,11 +12,11 @@ gcs = storage.Client()
 bucket = gcs.get_bucket(os.getenv('CLOUD_STORAGE_BUCKET'))
 
 app = Flask(__name__)
-app.config.update(
-    SESSION_COOKIE_SECURE=True,
-    SESSION_COOKIE_HTTPONLY=True,
-    SESSION_COOKIE_SAMESITE='None',
-)
+# app.config.update(
+#     SESSION_COOKIE_SECURE=True,
+#     SESSION_COOKIE_HTTPONLY=True,
+#     SESSION_COOKIE_SAMESITE='None',
+# )
 
 app.config['UPLOAD_FOLDER'] =os.getenv('UPLOAD_FOLDER')
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')

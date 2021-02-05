@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- <link rel="stylesheet" href="/Users/khrystyna/Desktop/PhotoProject/Server/server/static/styles.css"> -->
+    <link rel="stylesheet" href="{{url_for('static',filename='styles.css')}}">
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <title>Document</title>
+</head>
+<body>
+    <h1>Modify tags for file {{filename}} </h1>
+    <!-- <image src={{fileURL}}></image> -->
+    <form action='http://127.0.0.1:5000/123/modify_tags' method= "POST" id='tag_form' > 
+        <fieldset id='container'>
+            <legend>Add or remove existing tags</legend>
+              <div>
+                <label for="new_tag">Add new tag:</label>
+                <input type="text" id="new_tag" value=''>
+              </div>
+              <!-- <div>
+                <input type="checkbox" id="music" name="interest" value="music">
+                <label for="music">Music</label>
+              </div>
+              <div>
+                <input type="checkbox" id="art" name="interest" value="art">
+                <label for="art">Art</label>
+              </div>
+              <div>
+                <input type="checkbox" id="sports" name="interest" value="sports">
+                <label for="sports">Sports</label>
+              </div>
+              <div>
+                <input type="checkbox" id="cooking" name="interest" value="cooking">
+                <label for="cooking">Cooking</label>
+              </div>
+              <div>
+                <input type="checkbox" id="other" name="interest" value="other">
+                <label for="other">Other</label>
+                <input type="text" id="otherValue" name="other">
+              </div> -->
+              <div>
+                <button type="submit">Submit form</button>
+              </div>
+            </fieldset>
+          </form>
+          
+        <!-- <script src='/Users/khrystyna/Desktop/PhotoProject/Server/server/static/app.js'></script> -->
+    <script src="{{url_for('static',filename='modify_tags.js')}}"></script>
+
+</body>
+</html>

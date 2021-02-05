@@ -24,6 +24,7 @@ tags= db.Table('tags',
 class Upload(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     original_name = db.Column(db.String(120), unique=False, nullable=False)
+    hash_name = db.Column(db.String(120), unique=True, nullable=False)
     cloud_path = db.Column(db.String, unique=True, nullable=False)
     date_uploaded = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     

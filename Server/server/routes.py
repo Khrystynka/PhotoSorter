@@ -51,7 +51,7 @@ def upload():
                 tag =Tag.query.filter_by(name=tag_name).first()
                 if not tag:    
                     tag=Tag(name=tag_name)
-                upload_entry = Upload(original_name=originalfilename, cloud_path=blob.public_url,user_id=current_user.id)
+                upload_entry = Upload(original_name=originalfilename, hash_name = new_filename,cloud_path=blob.public_url,user_id=current_user.id)
                 print('upload_entry',upload_entry,upload_entry.tags)
                 upload_entry.tags.append(tag)
                 db.session.add(upload_entry)
@@ -64,8 +64,10 @@ def upload():
         return jsonify(upload_dict)
     return 'Something went wrong(('
 
-@app.route('/register', methods=['POST'])
+@app.route('/register', methods=["GET",'POST'])
 def register():
+    if request.method == "GET":
+        return render_template('register.html')
     print('before register current user',current_user, current_user.is_authenticated)
     # if current_user.is_authenticated:
     #     return "The user is already authenticated!"
@@ -128,3 +130,50 @@ def tags():
     return response
 
     # return jsonify(tag_list)
+@app.route('/<file_hashname>/get_tags', methods=['GET','POST'])
+def upload_tags(file_hashname):
+    if not current_user.is_authenticated:
+        redirect(url_for("login"))
+    upload= Upload.query.filter_by(hash_name=file_hashname).first()
+    if not upload:
+        return "The file was not uploaded "
+    if current_user!=upload.author:
+        return "You are not authenticated to view this file"
+    file_tags=[]
+    for tag in upload.tags:
+        file_tags.append(tag.name)
+    # response = make_response(jsonify(list(tag_set)))
+    # response.headers['Access-Control-Allow-Origin'] = 'null'
+    # response.headers['Access-Control-Allow-Credentials']= 'true'
+    return jsonify(file_tags)
+@app.route('/<file_hashname>/modify_tags', methods=['GET','POST'])
+def add_tag(file_hashname):
+    if request.method == "GET":
+        return render_template('modify_tags.html')
+    else:
+        print (request.form)
+        return request.form
+    print('request args',request.form.listvalues)
+    print ("request qury string",request.query_string)
+    # new_tags = request.form.listvalues
+    new_tags=['family','vacation']
+    if not current_user.is_authenticated:
+        redirect(url_for("login"))
+    upload= Upload.query.filter_by(hash_name=file_hashname).first()
+    if not upload:
+        return "The file was not uploaded "
+    if current_user!=upload.author:
+        return "You are not authenticated to view this file"
+    for tag_name in new_tags:
+        tag = Tag.query.filetr_by(name=tag_name ).first()
+        if not tag:
+            tag=Tag(name = tag_name)
+        upload.tags.append(tag)
+    db.session.add(upload)
+    db.session.commit()
+    # response = make_response(jsonify(list(tag_set)))
+    # response.headers['Access-Control-Allow-Origin'] = 'null'
+    # response.headers['Access-Control-Allow-Credentials']= 'true'
+    return jsonify({'added tags':new_tags})
+
+  
