@@ -2,17 +2,25 @@
 const container = document.querySelector('#container');
 // const preview = document.querySelector('.preview');
 const tagListURL = 'http://127.0.0.1:5000/get_tags'
+const docTagListURL = 'http://127.0.0.1:5000/{{%filename%}}/get_tags'
 const tag_input = document.querySelector('#new_tag')
-let tag_options=[]
+let user_tag_options=[]
+let document_tags=[]
 console.log('cookies',document.cookie)
-cookie= {session:1234}
+axios.get(docTagListURL)
+.then(data=>{
+  document_tags = data.data
+  console.log('document tags',document_tags)
+})
+.catch (error=>console.log(error))
 axios.get(tagListURL,{withCredentials: true})
 .then(data=>{
-  tag_options = data.data
-  console.log(data)
-  console.log('length of options',tag_options.length)
-for (let i=0;i<tag_options.length;i++){
-        container.appendChild(new_itemcontainer(i,tag_options[i]))
+  user_tag_options = data.data
+  console.log(user_tag_options)
+  console.log('length of options',user_tag_options.length)
+
+for (let i=0;i<user_tag_options.length;i++){
+        container.appendChild(new_itemcontainer(i,user_tag_options[i]))
 
 }
 
@@ -24,10 +32,12 @@ function new_itemcontainer(i,tag_name){
   const tag_label = document.createElement('label')
   const tag_checbox = document.createElement('input')
   tag_checbox.setAttribute('type','checkbox')
-  tag_checbox.setAttribute('checked',true)
+  if (document_tags.includes(tag_name)){
+    tag_checbox.setAttribute('checked',true)
+  }
   tag_checbox.setAttribute('id',`tag${i}`)
   tag_checbox.setAttribute('name','tag')
-  // tag_checbox.setAttribute('value',`${tag_options[i]}`)
+  tag_checbox.setAttribute('value',`${tag_name}`)
   tag_label.setAttribute('for',`tag${i}`)
   tag_label.textContent = tag_name
   item_container.appendChild(tag_label)
@@ -39,12 +49,12 @@ function new_itemcontainer(i,tag_name){
 tag_input.addEventListener('keypress',update_taglist)
 
 function update_taglist(e) {
-  e.preventDefault();
+  // e.prevet();
 
-  if ( e.target.value!="") {
+  if ( e.key =='Enter' && e.target.value!="") {
     
   tag_name = e.target.value;
-e.target.value=''
+  e.target.value=''
   container.appendChild(new_itemcontainer(tag_name,tag_name))
 
 }}

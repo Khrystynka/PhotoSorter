@@ -64,30 +64,43 @@ def upload():
         return jsonify(upload_dict)
     return 'Something went wrong(('
 
-@app.route('/register', methods=["GET",'POST'])
-def register():
-    if request.method == "GET":
-        return render_template('register.html')
-    print('before register current user',current_user, current_user.is_authenticated)
-    # if current_user.is_authenticated:
-    #     return "The user is already authenticated!"
-    print("username",request.form['username'],'password',request.form['password'])
-    hashed_password=bcrypt.generate_password_hash(request.form['password']).decode('utf-8')
-    if User.query.filter_by(username=request.form['username']).first() or User.query.filter_by(email=request.form['email']).first():
-            # flash( 'Username already taken.Please select another')
-            return "Username or email are not unique. Please select another one"
-    user_entry=User(username=request.form['username'],password=hashed_password,email=request.form['email'])
-    db.session.add(user_entry)
-    db.session.commit()
-    print('User entry id',user_entry.id)
-    return "Super"
+# @app.route('/register', methods=["GET",'POST'])
+# def register():
+#     if request.method == "GET":
+#         return render_template('register.html')
+#     print('before register current user',current_user, current_user.is_authenticated)
+#     # if current_user.is_authenticated:
+#     #     return "The user is already authenticated!"
+#     print("username",request.form['username'],'password',request.form['password'])
+#     hashed_password=bcrypt.generate_password_hash(request.form['password']).decode('utf-8')
+#     if User.query.filter_by(username=request.form['username']).first() or User.query.filter_by(email=request.form['email']).first():
+#             # flash( 'Username already taken.Please select another')
+#             return "Username or email are not unique. Please select another one"
+#     user_entry=User(username=request.form['username'],password=hashed_password,email=request.form['email'])
+#     db.session.add(user_entry)
+#     db.session.commit()
+#     print('User entry id',user_entry.id)
+#     return "Super"
+# @app.route('/login', methods=['GET','POST'])
+# def login():
+#     print('beforelogin',current_user, current_user.is_authenticated)
+#     # if current_user.is_authenticated:
+#     #      return "The user is already authenticated!"
+#     if request.method=='GET':
+#         return render_template("login.html")
+
+#     user = User.query.filter_by(username=request.form['username']).first()
+#     if user and bcrypt.check_password_hash(user.password, request.form['password']):
+#             # flash( 'Username already taken.Please select another')
+#             login_user(user,remember = request.form['remember'])
+#             return redirect(url_for('upload'))
+#     else: 
+#         return redirect(url_for('register'))
 @app.route('/login', methods=['GET','POST'])
 def login():
     print('beforelogin',current_user, current_user.is_authenticated)
-    # if current_user.is_authenticated:
-    #      return "The user is already authenticated!"
-    if request.method=='GET':
-        return render_template("login.html")
+    # if request.method=='GET':
+        # return render_template("login.html")
 
     user = User.query.filter_by(username=request.form['username']).first()
     if user and bcrypt.check_password_hash(user.password, request.form['password']):
@@ -96,6 +109,24 @@ def login():
             return redirect(url_for('upload'))
     else: 
         return redirect(url_for('register'))
+@app.route('/register', methods=["GET",'POST'])
+def register():
+    # if request.method == "GET":
+    #     return render_template('register.html')
+    print('before register current user',current_user, current_user.is_authenticated)
+    # if current_user.is_authenticated:
+    #     return "The user is already authenticated!"
+    print("request-args",request.args,'request',request,'request-data',request.data)
+    # hashed_password=bcrypt.generate_password_hash(request.form['password']).decode('utf-8')
+    # if User.query.filter_by(username=request.form['username']).first() or User.query.filter_by(email=request.form['email']).first():
+    #         # flash( 'Username already taken.Please select another')
+    #         return "Username or email are not unique. Please select another one"
+    # user_entry=User(username=request.form['username'],password=hashed_password,email=request.form['email'])
+    # db.session.add(user_entry)
+    # db.session.commit()
+    # print('User entry id',user_entry.id)
+    response = make_response(jsonify(["1"]))
+    return response
 @app.route('/logout', methods=['GET','POST'])
 def logout():
     print('beforelogout',current_user, current_user.is_authenticated)
@@ -149,14 +180,10 @@ def upload_tags(file_hashname):
 @app.route('/<file_hashname>/modify_tags', methods=['GET','POST'])
 def add_tag(file_hashname):
     if request.method == "GET":
-        return render_template('modify_tags.html')
+        return render_template('modify_tags.html', filename=file_hashname)
     else:
-        print (request.form)
-        return request.form
-    print('request args',request.form.listvalues)
-    print ("request qury string",request.query_string)
-    # new_tags = request.form.listvalues
-    new_tags=['family','vacation']
+        new_tags = request.form.getlist('tag')
+
     if not current_user.is_authenticated:
         redirect(url_for("login"))
     upload= Upload.query.filter_by(hash_name=file_hashname).first()
@@ -164,8 +191,9 @@ def add_tag(file_hashname):
         return "The file was not uploaded "
     if current_user!=upload.author:
         return "You are not authenticated to view this file"
+    upload.tags=[]
     for tag_name in new_tags:
-        tag = Tag.query.filetr_by(name=tag_name ).first()
+        tag = Tag.query.filter_by(name=tag_name ).first()
         if not tag:
             tag=Tag(name = tag_name)
         upload.tags.append(tag)

@@ -11,13 +11,9 @@
 <body>
     <h1>Modify tags for file {{filename}} </h1>
     <!-- <image src={{fileURL}}></image> -->
-    <form action='http://127.0.0.1:5000/123/modify_tags' method= "POST" id='tag_form' > 
+    <form action='http://127.0.0.1:5000/{{filename}}/modify_tags' method= "POST" id='tag_form' > 
         <fieldset id='container'>
             <legend>Add or remove existing tags</legend>
-              <div>
-                <label for="new_tag">Add new tag:</label>
-                <input type="text" id="new_tag" value=''>
-              </div>
               <!-- <div>
                 <input type="checkbox" id="music" name="interest" value="music">
                 <label for="music">Music</label>
@@ -44,6 +40,11 @@
               </div>
             </fieldset>
           </form>
+          <div>
+            <label for="new_tag">Add new tag:</label>
+            <input type="text" id="new_tag" value=''>
+          </div>
+
           
         <!-- <script src='/Users/khrystyna/Desktop/PhotoProject/Server/server/static/app.js'></script> -->
     <script src="{{url_for('static',filename='modify_tags.js')}}"></script>
