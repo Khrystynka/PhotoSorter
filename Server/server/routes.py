@@ -18,9 +18,9 @@ import os
 import uuid
 
 from werkzeug.utils import secure_filename
+import werkzeug
 
 ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg', 'gif'}
-TOKEN_EXPIRES = 15
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -106,7 +106,6 @@ def login():
             "access_token":access_token,
             "refresh_token":refresh_token,
             "user_id":user.id,
-            "token_expires":TOKEN_EXPIRES
 })
 
 @app.route('/register', methods=['POST'])
@@ -128,7 +127,6 @@ def register():
         "access_token":access_token,
         "refresh_token":refresh_token,
         "user_id":user_entry.id,
-        "token_expires":TOKEN_EXPIRES
 
         
         })
@@ -183,19 +181,16 @@ def get_uploads():
     return jsonify(upload_list)
 
 @app.route('/get_tags', methods=['GET','POST'])
+@jwt_required()
 def tags():
-    if not current_user.is_authenticated:
-        redirect(url_for("login"))
     tag_set=set()
     uploads=Upload.query.filter_by(author=current_user).all()  
-    print('uploads for current user', uploads)
     for upload in uploads:
         for tag in upload.tags:
             tag_set.add(tag.name)
-    response = make_response(jsonify(list(tag_set)))
+    return jsonify(list(tag_set))
     # response.headers['Access-Control-Allow-Origin'] = 'null'
     # response.headers['Access-Control-Allow-Credentials']= 'true'
-    return response
 
     # return jsonify(tag_list)
 @app.route('/<file_hashname>/get_tags', methods=['GET','POST'])
@@ -228,13 +223,18 @@ def add_tag():
     for tag_name in new_tags:
         tag = Tag.query.filter_by(name=tag_name ).first()
         if not tag:
-            tag=Tag(name = tag_name)
+            tag = Tag(name=tag_name)
+            db.session.add(tag)
+            db.session.commit()
+        print('adding tag',tag)
         upload.tags.append(tag)
+        print('after adding',upload.tags)
     db.session.add(upload)
     db.session.commit()
     # response = make_response(jsonify(list(tag_set)))
     # response.headers['Access-Control-Allow-Origin'] = 'null'
     # response.headers['Access-Control-Allow-Credentials']= 'true'
+    print('added tags to file',upload.tags)
     return jsonify({'added tags':new_tags})
 
 @app.route('/delete', methods=['GET','POST'])
@@ -248,6 +248,22 @@ def delete_document():
     db.session.delete(upload)
     db.session.commit()
     return jsonify({'deleted document with id':file_id})
+
+
+# from werkzeug.exceptions import HTTPException
+# 
+# @app.errorhandler(Exception)
+# def handle_exception(e):
+#     # pass through HTTP errors
+#     if isinstance(e, HTTPException):
+#         return e
+
+#     print("Error processing request", e)
+
+#     # now you're handling non-HTTP exceptions only
+#     return jsonify({'error':500})
+
+
 
   # @app.route('/upload', methods=['GET', 'POST'])
 # def upload():

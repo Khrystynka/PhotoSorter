@@ -31,10 +31,11 @@ class Upload(db.Model):
     date_uploaded = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'),nullable=True)
-    tags = db.relationship('Tag', secondary= tags)
+    tags = db.relationship('Tag', secondary=tags, viewonly=True)
 
     def __repr__(self):
         return f"Upload ({self.original_name},{self.cloud_path},{self.date_uploaded},{self.user_id},{self.tags})"
+
 class Tag(db.Model):
     name = db.Column(db.String(120), nullable=False,unique=True,primary_key=True)
     uploads = db.relationship('Upload', secondary = tags, lazy=True)

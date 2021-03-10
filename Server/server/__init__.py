@@ -30,7 +30,7 @@ app.config['API_KEY']=os.getenv('API_KEY')
 # app.config['MAX_CONTENT_LENGTH'] = 1024 * 1024
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI')
 app.config["JWT_SECRET_KEY"] = os.getenv('SECRET_KEY')
-app.config["JWT_ACCESS_TOKEN_EXPIRES"]=timedelta(minutes=15)
+app.config["JWT_ACCESS_TOKEN_EXPIRES"]=timedelta(minutes=120)
 app.config["JWT_REFRESH_TOKEN_EXPIRES"] = timedelta(days=30)
 
 
