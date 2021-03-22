@@ -1,8 +1,8 @@
 from server import db, login_manager
-from server import db
-
 from datetime import datetime
 from flask_login import UserMixin
+from server import bcrypt
+
 
 
 
@@ -20,6 +20,8 @@ class User(db.Model,UserMixin):
     password = db.Column(db.String(120), nullable=False)
     uploads= db.relationship('Upload', backref='author', lazy=True)
 
+    def hash(password):
+        return bcrypt.generate_password_hash(password).decode('utf-8')
     def __repr__(self):
         return f"User ({self.username},{self.email},{self.password},{self.uploads})"
 

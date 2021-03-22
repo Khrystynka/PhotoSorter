@@ -49,7 +49,7 @@ def user_lookup_callback(_jwt_header, jwt_data):
 def my_expired_token_callback(jwt_header, jwt_payload):
     return jsonify(err="Your token has expired.Login again!"), 401
 
-@bp.route('/upload', methods=['GET','POST'])
+@bp.route('/upload', methods=['POST'])
 @jwt_required()
 def upload():
     try:
@@ -100,9 +100,9 @@ def upload():
 @bp.route('/login', methods=['POST'])
 def login():
         post_data = request.get_json()
-        print(post_data)
+        access_token = None
+        # print('Login data: email',post_data.get('email'))
         try:
-            # fetch the user data
             user = User.query.filter_by(email=post_data.get('email')).first()
             if user and bcrypt.check_password_hash(user.password, post_data.get('password')):
                     access_token = create_access_token(identity=user)
@@ -122,7 +122,7 @@ def login():
                 }
                 return make_response(jsonify(responseObject)), 404
         except Exception as e:
-            print(e)
+            print('exception error',e)
             responseObject = {
                 'status': 'fail',
                 'message': 'Try again'
@@ -137,7 +137,8 @@ def register():
         form_email = request.json['email']
         form_password=request.json['password']
         print(form_email,form_password)
-        hashed_password=bcrypt.generate_password_hash(form_password).decode('utf-8')
+        # hashed_password=bcrypt.generate_password_hash(form_password).decode('utf-8')
+        hashed_password = User.hash(form_password)
         if User.query.filter_by(email=form_email).first():
             responseObject = {
                 'status': 'fail',
@@ -182,12 +183,24 @@ def refresh():
 @bp.route("/who_am_i", methods=["GET"])
 @jwt_required()
 def decode_token():
-    # We can now access our sqlalchemy User object via `current_user`.
-    return jsonify(
-        id=current_user.id,
-        email=current_user.email,
-        username=current_user.username,
-    )
+    try:
+        responseObject = {
+                    'status': 'success',
+                    'message': 'User successfully registered!',
+                    'id':current_user.id,
+                    'email':current_user.email,
+                    'username':current_user.username,
+                }
+        return make_response(jsonify(responseObject)), 200
+    except Exception as e:
+            print(e)
+            responseObject = {
+                'status': 'fail',
+                'message': 'Try again'
+            }
+            return make_response(jsonify(responseObject)), 500
+
+    
 
 
 @bp.route('/logout', methods=['GET','POST'])
@@ -323,7 +336,7 @@ def delete_document():
 
 
 @bp.route('/get_user/<email>')
-def getuser(email):
+def get_user(email):
     user = User.query.filter_by(email=email).first()
     if not user:
         return 'No user found'

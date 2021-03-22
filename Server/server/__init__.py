@@ -10,7 +10,6 @@ from google.cloud import storage
 # from flask import request
 
 from flask_jwt_extended import JWTManager
-from server.config import BaseConfig
 gcs = storage.Client()
 bucket = gcs.get_bucket(os.getenv('CLOUD_STORAGE_BUCKET'))
 jwt = JWTManager()
@@ -18,7 +17,7 @@ db = SQLAlchemy()
 bcrypt = Bcrypt()
 login_manager = LoginManager()
 
-def create_app(config_object=BaseConfig):
+def create_app(config_object):
     app = Flask(__name__)
     app.config.from_object(config_object)
     
@@ -36,4 +35,3 @@ def create_app(config_object=BaseConfig):
     print(app.testing)
     return app
 
-app=create_app()
