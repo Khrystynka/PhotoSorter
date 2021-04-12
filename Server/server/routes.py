@@ -88,7 +88,6 @@ def upload():
                 }
             return make_response(jsonify(responseObject)), 200
     except Exception as e:
-            print(e)
             responseObject = {
                 'status': 'fail',
                 'message': 'Try again'
@@ -101,7 +100,6 @@ def upload():
 def login():
         post_data = request.get_json()
         access_token = None
-        # print('Login data: email',post_data.get('email'))
         try:
             user = User.query.filter_by(email=post_data.get('email')).first()
             if user and bcrypt.check_password_hash(user.password, post_data.get('password')):
@@ -122,7 +120,6 @@ def login():
                 }
                 return make_response(jsonify(responseObject)), 404
         except Exception as e:
-            print('exception error',e)
             responseObject = {
                 'status': 'fail',
                 'message': 'Try again'
@@ -136,8 +133,6 @@ def register():
     try:
         form_email = request.json['email']
         form_password=request.json['password']
-        print(form_email,form_password)
-        # hashed_password=bcrypt.generate_password_hash(form_password).decode('utf-8')
         hashed_password = User.hash(form_password)
         if User.query.filter_by(email=form_email).first():
             responseObject = {
@@ -160,7 +155,6 @@ def register():
             }
             return make_response(jsonify(responseObject)), 200
     except Exception as e:
-            print(e)
             responseObject = {
                 'status': 'fail',
                 'message': 'Try again'
@@ -193,26 +187,13 @@ def decode_token():
                 }
         return make_response(jsonify(responseObject)), 200
     except Exception as e:
-            print(e)
             responseObject = {
                 'status': 'fail',
                 'message': 'Try again'
             }
             return make_response(jsonify(responseObject)), 500
 
-    
 
-
-@bp.route('/logout', methods=['GET','POST'])
-def logout():
-    print('beforelogout',current_user, current_user.is_authenticated)
-    # if current_user.is_authenticated:
-
-        # logout_user()
-    #     return "The user is already authenticated!"
-    print('afterlogout',current_user, current_user.is_authenticated)
-
-    return redirect(url_for('login'))
 @bp.route('/get_uploads', methods=['GET','POST'])
 @jwt_required()
 def get_uploads():
@@ -227,7 +208,27 @@ def get_uploads():
             for upload in uploads]
         return make_response(jsonify(upload_list)), 200
     except Exception as e:
-            print(e)
+            responseObject = {
+                'status': 'fail',
+                'message': 'Try again'
+            }
+            return make_response(jsonify(responseObject)), 500
+
+@bp.route('/for_tag_get_uploads', methods=['GET','POST'])
+@jwt_required()
+def get_uploads_for_tag():
+    try:
+        tag_name = request.get_json()['tag']
+        uploads=Upload.query.filter_by(author=current_user).all()            
+        upload_list=[{
+            'id':(upload.id),
+            'user_id':current_user.id,
+            'title':upload.original_name,
+            'url':upload.cloud_path,
+            'tags':[tag.name for tag in upload.tags]} 
+            for upload in uploads if tag_name in [tag.name for tag in upload.tags]]
+        return make_response(jsonify(upload_list)), 200
+    except Exception as e:
             responseObject = {
                 'status': 'fail',
                 'message': 'Try again'
@@ -246,7 +247,6 @@ def tags():
                 tag_set.add(tag.name)
         return make_response(jsonify(list(tag_set))),200
     except Exception as e:
-            print(e)
             responseObject = {
                 'status': 'fail',
                 'message': 'Try again'
@@ -278,7 +278,6 @@ def upload_tags(file_hashname):
 def add_tag():
     try:
         new_tags = request.json['tags']
-        print('addint this new_tags',new_tags)
         file_id= request.json['documentId']
         upload= Upload.query.filter_by(id=file_id).first()
         if not upload:
@@ -305,7 +304,6 @@ def add_tag():
                 }
             return make_response(jsonify(responseObject)), 200
     except Exception as e:
-            print(e)
             responseObject = {
                 'status': 'fail',
                 'message': 'Try again'
@@ -327,7 +325,6 @@ def delete_document():
                 }
         return make_response(jsonify(responseObject)), 200
     except Exception as e:
-            print(e)
             responseObject = {
                 'status': 'fail',
                 'message': 'Try again'
@@ -344,104 +341,9 @@ def get_user(email):
         'username': user.username,
         'email': user.email,
         'password': user.password,
-        # 'uploads': user.uploads,
         'id':user.id
     })
 @bp.route('/about')
 def about():
     return 'The about page'
-  
-# from werkzeug.exceptions import HTTPException
-# 
-# @bp.errorhandler(Exception)
-# def handle_exception(e):
-#     # pass through HTTP errors
-#     if isinstance(e, HTTPException):
-#         return e
-
-#     print("Error processing request", e)
-
-#     # now you're handling non-HTTP exceptions only
-#     return jsonify({'error':500})
-
-
-
-  # @bp.route('/upload', methods=['GET', 'POST'])
-# def upload():
-#     print('before upload current user',current_user, current_user.is_authenticated)
-#     if not current_user.is_authenticated:
-#         redirect(url_for("login"))
-#     if request.method=='GET':
-#         return render_template("index.html")
-    
-#     if request.method == 'POST':
-#         allfiles = request.files.getlist('file')
-#         print('all files', allfiles)
-#         print ('another data',request.form)
-#         if len(allfiles) == 0:
-#             return "No files Upploaded"
-#         upload_dict={}
-#         # Get the bucket that the file will be uploaded to.
-
-#         # Create a new blob and upload the file's content.
-
-#         for (index,file) in enumerate(allfiles):
-#             if file and allowed_file(file.filename):
-#                 originalfilename = secure_filename(file.filename)
-#                 new_filename = str(uuid.uuid4())
-#                 # server_path = os.path.join(
-#                 #     app.config['UPLOAD_FOLDER'], new_filename)
-#                 upload_dict[new_filename]=originalfilename
-#                 # file.save(server_path)
-#                 blob = bucket.blob(new_filename)
-#                 blob.upload_from_string(file.read(),content_type=file.content_type)
-#                 # blob.upload_from_filename(server_path)
-#                 tag_name = request.form['tag'+str(index)]
-#                 tag =Tag.query.filter_by(name=tag_name).first()
-#                 if not tag:    
-#                     tag=Tag(name=tag_name)
-#                 upload_entry = Upload(original_name=originalfilename, hash_name = new_filename,cloud_path=blob.public_url,user_id=current_user.id)
-#                 print('upload_entry',upload_entry,upload_entry.tags)
-#                 upload_entry.tags.append(tag)
-#                 db.session.add(upload_entry)
-#                 db.session.add(tag)
-#                 db.session.commit()
-#                 check=Upload.query.filter(Upload.id==upload_entry.id,Upload.user_id==current_user.id).first()
-#                 print('check tags for file',originalfilename,'from user',current_user.username,current_user.id,'are', check.tags)
-#         # print('after upload current user',current_user, current_user.is_authenticated)
-        
-#         return jsonify(upload_dict)
-#     return 'Something went wrong(('
-
-# @app.route('/register', methods=["GET",'POST'])
-# def register():
-#     if request.method == "GET":
-#         return render_template('register.html')
-#     print('before register current user',current_user, current_user.is_authenticated)
-#     # if current_user.is_authenticated:
-#     #     return "The user is already authenticated!"
-#     print("username",request.form['username'],'password',request.form['password'])
-#     hashed_password=bcrypt.generate_password_hash(request.form['password']).decode('utf-8')
-#     if User.query.filter_by(username=request.form['username']).first() or User.query.filter_by(email=request.form['email']).first():
-#             # flash( 'Username already taken.Please select another')
-#             return "Username or email are not unique. Please select another one"
-#     user_entry=User(username=request.form['username'],password=hashed_password,email=request.form['email'])
-#     db.session.add(user_entry)
-#     db.session.commit()
-#     print('User entry id',user_entry.id)
-#     return "Super"
-# @app.route('/login', methods=['GET','POST'])
-# def login():
-#     print('beforelogin',current_user, current_user.is_authenticated)
-#     # if current_user.is_authenticated:
-#     #      return "The user is already authenticated!"
-#     if request.method=='GET':
-#         return render_template("login.html")
-
-#     user = User.query.filter_by(username=request.form['username']).first()
-#     if user and bcrypt.check_password_hash(user.password, request.form['password']):
-#             # flash( 'Username already taken.Please select another')
-#             login_user(user,remember = request.form['remember'])
-#             return redirect(url_for('upload'))
-#     else: 
-#         return redirect(url_for('register'))
+ 
